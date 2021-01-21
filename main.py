@@ -30,15 +30,15 @@ class LSTM(torch.nn.Module):
     def forward(self, x, hidden):
         batch_size = x.size(0)
         x = x.long()
-        embeds = self.embedding(x)
-        lstm_out, hidden = self.lstm(embeds, hidden)
-        lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
+        #embeds = self.embedding(x)
+        lstm_out, hidden = x, hidden
+        #lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
 
-        out = self.dropout(lstm_out)
-        out = self.fc(out)
-        out = self.sigmoid(out)
+        #out = self.dropout(lstm_out)
+        #out = self.fc(lstm_out.float())
+        out = self.sigmoid(lstm_out.float())
 
-        out = out.view(64, -1)
+        #out = out.view(300000, -1)
         out = out[:, -1]
         return out, hidden
 
