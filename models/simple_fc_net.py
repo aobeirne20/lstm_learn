@@ -18,7 +18,7 @@ class NetWrapper:
 
     def learn(self, train_load, val_load, batch_size, learning_rate, n_epochs):
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.net.parameters(), learning_rate)
+        optimizer = torch.optim.SGD(self.net.parameters(), lr=0.01, momentum=0.9)
         print(f'\nTraining with {n_epochs} epochs:')
 
         self.net.train()
@@ -30,6 +30,8 @@ class NetWrapper:
             loss_total = 0
             # hidden = self.net.init_hidden(batch_size)
             for batch_idx, (inputs, labels) in enumerate(train_load):
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
                 # self.net.train()
                 # hidden = tuple([e.data for e in hidden])
                 # self.net.zero_grad()

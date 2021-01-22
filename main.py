@@ -6,8 +6,8 @@ import numpy as np
 from torch.utils.data import TensorDataset, DataLoader
 from custom_loader import AudioSnipDataset
 
-# from models.simple_fc_net import *
-from models.lstm import *
+from models.simple_fc_net import *
+# from models.lstm import *
 # from models.dilation_conv_net import DilationConvNet as Net
 
 torch.manual_seed(0)
@@ -17,13 +17,13 @@ class AudioData:
 
     def __init__(self, input_dim, output_dim, batch_size):
         train_set = AudioSnipDataset(os.path.join(AudioData.DATA_DIR, "train"), input_dim, output_dim)
-        self.train_load = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+        self.train_load = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
         val_set = AudioSnipDataset(os.path.join(AudioData.DATA_DIR, "val"), input_dim, output_dim)
-        self.val_load = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+        self.val_load = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
         test_set = AudioSnipDataset(os.path.join(AudioData.DATA_DIR, "test"), input_dim, output_dim)
-        self.test_load = torch.utils.data.DataLoader(test_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=False)
+        self.test_load = torch.utils.data.DataLoader(test_set, batch_size=1, shuffle=True, num_workers=4, pin_memory=True)
 
 if __name__ == '__main__':
     #Also the number of frames in the input
