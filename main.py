@@ -1,3 +1,4 @@
+import os
 import torch
 import torchvision.transforms as transforms
 import time
@@ -11,6 +12,7 @@ torch.manual_seed(0)
 class LSTM(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob):
         super(LSTM, self).__init__()
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.output_dim = output_dim
         self.n_layers = n_layers
         self.hidden_dim = hidden_dim
@@ -44,28 +46,30 @@ class LSTM(torch.nn.Module):
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
-        hidden = (weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to("cuda:0"),
-                  weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to("cuda:0"))
+        hidden = (weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device),
+                  weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device))
         return hidden
 
 
 class AudioData:
+    DATA_DIR = os.path.join(os.getcwd(), "new_data", "train", "signalFiles")
+
     def __init__(self, input_dim, output_dim, batch_size):
-        train_set = AudioSnipDataset("C:/Users/augus/PycharmProjects/lstm_learn/new_data/train/signalFiles", input_dim, output_dim, type="train")
+        train_set = AudioSnipDataset(AudioData.DATA_DIR, input_dim, output_dim, type="train")
         self.train_load = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
 
-        val_set = AudioSnipDataset("C:/Users/augus/PycharmProjects/lstm_learn/new_data/train/signalFiles", input_dim, output_dim, type="val")
+        val_set = AudioSnipDataset(AudioData.DATA_DIR, input_dim, output_dim, type="val")
         self.val_load = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
 
-        test_set = AudioSnipDataset("C:/Users/augus/PycharmProjects/lstm_learn/new_data/train/signalFiles", input_dim, output_dim, type="test")
+        test_set = AudioSnipDataset(AudioData.DATA_DIR, input_dim, output_dim, type="test")
         self.test_load = torch.utils.data.DataLoader(test_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=False)
 
 
 class NetWrapper:
     def __init__(self, input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob):
         self.net = LSTM(input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob)
-        if torch.cuda.is_available():
-            self.net.to('cuda:0')
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.net.to(self.device)
 
     def learn(self, train_load, val_load, batch_size, learning_rate, n_epochs):
         criterion = torch.nn.BCELoss()
@@ -94,7 +98,7 @@ class NetWrapper:
                     model.eval()
                     for inp, lab in val_load:
                         val_h = tuple([each.data for each in val_h])
-                        inp, lab = inp.to('cuda:0'), lab.to('cuda:0')
+                        inp, lab = inp.to(self.device), lab.to(self.device)
                         out, val_h = model(inp, val_h)
                         val_loss = criterion(out.squeeze(), lab.float())
                         val_losses.append(val_loss.item())
@@ -138,7 +142,3 @@ if __name__ == '__main__':
     model = NetWrapper(input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob)
 
     model.learn(Audio.train_load, Audio.val_load, batch_size, learning_rate=0.005, n_epochs=5)
-
-
-
-
