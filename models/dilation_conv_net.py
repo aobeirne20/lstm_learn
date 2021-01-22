@@ -1,6 +1,6 @@
 import torch
 
-class DilationConvNet(torch.nn.Module):
+class Net(torch.nn.Module):
     def __init__(self, input_dim=1024, output_dim=1):
         super(DilationConvNet, self).__init__()
         self.input_dim = output_dim
@@ -43,7 +43,7 @@ class DilationConvNet(torch.nn.Module):
         x = self.fc2(x)
         return x
 
-net = DilationConvNet()
+net = Net()
 # (batch, channel, sample)
 x = torch.rand(1, 1, 1024)
 print(x.size())

@@ -3,62 +3,42 @@ import numpy as np
 import random
 import torch
 
+from util import *
 
 class AudioSnipDataset(torch.utils.data.Dataset):
-    def __init__(self, directory, seg_length, ans_length, type):
-        data_sets = []
-        temp_segments = []
-        temp_answers = []
-        self.type = type
+    def __init__(self, directory, seg_length, ans_length):
+        self.seg_length, self.ans_length = seg_length, ans_length
+        self.data_files = [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith(".npy")]
+        self.n_data_files = len(self.data_files)
+        self.data_file_sizes = [len(load_signal(file)) for file in self.data_files]
+        print(f"found {self.n_data_files} files in data directory: {self.data_files}")
 
-        for file in os.listdir(directory):
-            if file.endswith(".signal"):
-                print("loading", file, self.type)
-                data_sets.append(np.fromfile(os.path.join(directory, file), dtype=float))
+        n_frames = sum([len(load_signal(file)) for file in self.data_files])
+        self.n_examples = n_frames - self.n_data_files * (seg_length + ans_length)
+        print("n frames:", n_frames)
+        print("n examples:", self.n_examples)
 
-        self.row_num = 0
-        for data_array in data_sets:
-            for index in range(0, data_array.size - 1 - seg_length - ans_length):
-                self.row_num += 1
-                temp_segments.append(data_array[index:index + seg_length])
-                temp_answers.append(data_array[index + seg_length:index + seg_length + ans_length])
-
-        x_data_np = np.vstack(temp_segments)
-        y_data_np = np.vstack(temp_answers)
-
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.x_data = torch.tensor(x_data_np, dtype=torch.float32).to(self.device)
-        self.y_data = torch.tensor(y_data_np, dtype=torch.float32).to(self.device)
-
-        self.n_train_samples = int(0.6 * self.row_num)
-        self.n_val_samples = int(0.2 * self.row_num)
-        self.n_test_samples = self.row_num - self.n_train_samples - self.n_val_samples
-        
-        splits = [self.n_train_samples, self.n_val_samples, self.n_test_samples]
-        self.x_data_train, self.x_data_val, self.x_data_test = torch.split(self.x_data, splits)
-        self.y_data_train, self.y_data_val, self.y_data_test = torch.split(self.y_data, splits)
+        self.cached_file = None
+        self.cached_data = None
+        self.total_requests = 0
 
     def __len__(self):
-        if self.type == "train":
-            return self.n_train_samples
-        elif self.type == "val":
-            return self.n_val_samples
-        elif self.type == "test":
-            return self.n_test_samples
+        return self.n_examples
 
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
+        # self.total_requests += 1
+        # print("total req:", self.total_requests)
+        # print("getting item #", idx)
+        file = self.get_file_for_idx(idx)
+        data = self.cached_data if file == self.cached_file else load_signal(file)
+        self.cached_file = file
+        self.cached_data = data
+        return data[idx:idx + self.seg_length], data[idx + self.seg_length:idx + self.seg_length + self.ans_length]
 
-        if self.type == "train":
-            segment = self.x_data_train[idx, :]
-            answer = self.y_data_train[idx]
-            return segment, answer
-        elif self.type == "val":
-            segment = self.x_data_val[idx, :]
-            answer = self.y_data_val[idx]
-            return segment, answer
-        elif self.type == "test":
-            segment = self.x_data_test[idx, :]
-            answer = self.y_data_test[idx]
-            return segment, answer
+    def get_file_for_idx(self, idx):
+        file_idx = 0
+        frames_passed = 0
+        while idx + self.seg_length + self.ans_length + frames_passed > self.data_file_sizes[file_idx]:
+            frames_passed += self.data_file_sizes[file_idx] - (self.seg_length + self.ans_length)
+            file_idx += 1
+        return self.data_files[file_idx]
