@@ -6,8 +6,8 @@ sys.path.append("..")
 from util import *
 
 def run_dio_pitch_detection(data, fs=48000):
-    _f0, t = pw.dio(data, fs, frame_period=1000 / fs)
-    f0 = pw.stonemask(data, _f0, t, fs)
+    f0, t = pw.dio(data, fs, frame_period=1000 / fs)
+    # f0 = pw.stonemask(data, f0, t, fs)
     return f0
 
 def create_target_dataset(input_dir, target_dir):

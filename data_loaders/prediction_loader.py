@@ -5,6 +5,13 @@ import torch
 
 from util import *
 
+class AudioData:
+    DATA_DIR = os.path.join(os.getcwd(), "new_data")
+
+    def __init__(self, input_dim, output_dim, batch_size):
+        train_set = AudioSnipDataset(os.path.join(AudioData.DATA_DIR, "train"), input_dim, output_dim)
+        self.train_load = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
+
 class AudioSnipDataset(torch.utils.data.Dataset):
     def __init__(self, directory, seg_length, ans_length):
         self.seg_length, self.ans_length = seg_length, ans_length

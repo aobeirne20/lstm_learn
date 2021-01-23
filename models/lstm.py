@@ -43,7 +43,7 @@ class LSTM(torch.nn.Module):
                   weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device))
         return hidden
 
-class NetWrapper:
+class LSTMNetWrapper:
     def __init__(self, input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob):
         self.net = LSTM(input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob)
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
