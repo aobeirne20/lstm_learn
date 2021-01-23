@@ -5,9 +5,9 @@ import pyworld as pw
 sys.path.append("..")
 from util import *
 
-def run_dio_pitch_detection(data, fs=48000):
-    f0, t = pw.dio(data, fs, frame_period=1000 / fs)
-    # f0 = pw.stonemask(data, f0, t, fs)
+def run_dio_pitch_detection(data, fs=96000):
+    f0, t = pw.dio(data, fs, frame_period=1000 / fs, f0_floor=60, f0_ceil=1200)
+    f0 = pw.stonemask(data, f0, t, fs)
     return f0
 
 def create_target_dataset(input_dir, target_dir):
