@@ -79,7 +79,7 @@ class TorchAudioDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         segment = self.segment_set[idx].segment_data
-        prediction = self.segment_set[idx].prediction_label
+        prediction = self.segment_set[idx].prediction_label[0]
         sample = {'segment': segment, 'prediction': prediction}
         return sample
 
