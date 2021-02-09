@@ -43,7 +43,8 @@ class LSTM(torch.nn.Module):
                   weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(self.device))
         return hidden
 
-class LSTMNetWrapper:
+
+class NetWrapper:
     def __init__(self, input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob):
         self.net = LSTM(input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob)
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -60,34 +61,34 @@ class LSTMNetWrapper:
         for epoch in range(n_epochs):
             s_time = time()
             loss_total = 0
-            hidden = model.net.init_hidden(batch_size)
+            hidden = self.net.init_hidden(batch_size)
             for batch_idx, (inputs, labels) in enumerate(train_load):
                 hidden = tuple([e.data for e in hidden])
-                model.net.zero_grad()
-                output, hidden = model.net(inputs, hidden)
+                self.net.zero_grad()
+                output, hidden = self.net(inputs, hidden)
                 loss = criterion(output.squeeze(), labels.float())
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
+                torch.nn.utils.clip_grad_norm_(self.parameters(), clip)
                 optimizer.step()
 
                 if batch_idx % 10 == 0:
-                    val_h = model.init_hidden(batch_size)
+                    val_h = self.init_hidden(batch_size)
                     val_losses = []
-                    model.eval()
+                    self.eval()
                     for inp, lab in val_load:
                         val_h = tuple([each.data for each in val_h])
                         inp, lab = inp.to(self.device), lab.to(self.device)
-                        out, val_h = model(inp, val_h)
+                        out, val_h = self(inp, val_h)
                         val_loss = criterion(out.squeeze(), lab.float())
                         val_losses.append(val_loss.item())
 
-                    model.train()
+                    self.train()
                     print("Epoch: {}/{}...".format(epoch + 1, n_epochs),
                           "Step: {}...".format(batch_idx),
                           "Loss: {:.6f}...".format(loss.item()),
                           "Val Loss: {:.6f}".format(np.mean(val_losses)))
                     if np.mean(val_losses) <= valid_loss_min:
-                        torch.save(model.state_dict(), './state_dict.pt')
+                        torch.save(self.state_dict(), './state_dict.pt')
                         print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
                                                                                                         np.mean(
                                                                                                             val_losses)))

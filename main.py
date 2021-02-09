@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 import time
 import numpy as np
 from torch.utils.data import TensorDataset, DataLoader
-from custom_loader import AudioSnipDataset
+from data_loaders.prediction_loader import AudioSnipDataset, AudioData
 
 # from models.simple_fc_net import *
 from models.lstm import *
