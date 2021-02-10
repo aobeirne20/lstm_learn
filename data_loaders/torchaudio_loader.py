@@ -32,8 +32,7 @@ class TorchAudioDatasetWrapper:
                 print(f"Transferred {file_name} to CUDA successfully")
             if audio_info.num_channels > 1:
                 split_sequences = torch.split(audio_sequence, 1)
-                for sequence in split_sequences:
-                    loaded_sequences.append(torch.squeeze(sequence))
+                loaded_sequences.append(torch.squeeze(split_sequences[0]))
             else:
                 loaded_sequences.append(torch.squeeze(audio_sequence))
 
@@ -47,7 +46,9 @@ class TorchAudioDatasetWrapper:
                 current_segment = split_segments[n]
                 next_segment = split_segments[n+1]
                 if (list(current_segment.size())[0] == segment_length) & (list(next_segment.size())[0] > label_length):
-                    loaded_segments.append(SegmentPair(current_segment, next_segment[0:label_length]))
+                    loaded_segments.append(SegmentPair(
+                        torch.unsqueeze(current_segment, 1),
+                        torch.unsqueeze(next_segment[0:label_length], 1)))
                     if (n == len(split_segments)-2) & (list(next_segment.size())[0] == segment_length):
                         num_eliminated += 1
                 else:
@@ -79,17 +80,19 @@ class TorchAudioDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         segment = self.segment_set[idx].segment_data
-        prediction = self.segment_set[idx].prediction_label[0]
-        sample = {'segment': segment, 'prediction': prediction}
+        segment_shift1 = self.segment_set[idx].segment_shift1_data
+        sample = (segment, segment_shift1)
         return sample
 
 
 class SegmentPair:
-    __slots__ = ['segment_data', 'prediction_label']
+    __slots__ = ['segment_data', 'prediction_label', 'segment_shift1_data']
 
     def __init__(self, segment_data, prediction_label):
         self.segment_data = segment_data
         self.prediction_label = prediction_label
+        self.segment_shift1_data = torch.cat((segment_data[1:], torch.unsqueeze(prediction_label[0], 1)), 0)
+
 
 
 

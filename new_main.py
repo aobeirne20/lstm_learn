@@ -1,7 +1,8 @@
 from data_loaders.torchaudio_loader import TorchAudioDatasetWrapper
-from models.lstm import *
+from models.new_lstm import *
 
 torch.manual_seed(0)
+torch.backends.cudnn.enabled = True
 
 if __name__ == '__main__':
     #Also the number of frames in the input NOT the sequential data input
@@ -16,13 +17,15 @@ if __name__ == '__main__':
 
     batch_size = 20
 
-    embedding_dim = 5000
-    hidden_dim = 512
+
+    hidden_dim =  50
     n_layers = 2
-    drop_prob = 0.5
 
-    AudioData = TorchAudioDatasetWrapper(5000, 100, "raw_audio", (0.6, 0.2, 0.2))
 
-    modelx = NetWrapper(input_dim, output_dim, hidden_dim, embedding_dim, n_layers, drop_prob)
+    AudioData = TorchAudioDatasetWrapper(150, 100, "raw_audio", (0.9, 0.05, 0.05))
+    training_load = torch.utils.data.DataLoader(AudioData.training_set, batch_size, shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+    validation_load = torch.utils.data.DataLoader(AudioData.validation_set, batch_size, shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+    testing_load = torch.utils.data.DataLoader(AudioData.testing_set, batch_size, shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
 
-    modelx.learn(AudioData.training_set, AudioData.validation_set, batch_size, learning_rate=0.005, n_epochs=5)
+    model = LSTMWrapper(input_dim, output_dim, hidden_dim, n_layers, batch_size)
+    model.learn(training_load, validation_load, learning_rate=0.0005, n_epochs=1000, print_every=1)

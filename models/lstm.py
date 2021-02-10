@@ -67,7 +67,7 @@ class NetWrapper:
                 self.net.zero_grad()
                 output, hidden = self.net(inputs, hidden)
                 loss = criterion(output.squeeze(), labels.float())
-                loss.backward()
+                #loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.parameters(), clip)
                 optimizer.step()
 
