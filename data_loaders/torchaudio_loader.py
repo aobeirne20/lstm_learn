@@ -27,6 +27,7 @@ class TorchAudioDatasetWrapper:
             audio_info = torchaudio.backend._soundfile_backend.info(file_path)
             print(f"Loaded audio file {file_name}: {audio_info.num_channels} channel(s) @{audio_info.sample_rate}Hz, {audio_info.num_frames} frames long")
             audio_sequence = torchaudio.backend._soundfile_backend.load(file_path, normalize=True)[0]
+            audio_sequence = torchaudio.transforms.Resample(orig_freq=audio_info.sample_rate, new_freq=12_000)(audio_sequence)
             if torch.cuda.is_available():
                 audio_sequence = audio_sequence.to('cuda:0')
                 print(f"Transferred {file_name} to CUDA successfully")
@@ -92,7 +93,3 @@ class SegmentPair:
         self.segment_data = segment_data
         self.prediction_label = prediction_label
         self.segment_shift1_data = torch.cat((segment_data[1:], torch.unsqueeze(prediction_label[0], 1)), 0)
-
-
-
-
