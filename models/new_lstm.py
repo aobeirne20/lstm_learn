@@ -99,6 +99,17 @@ class LSTMWrapper:
 
 
         train_loss.append(np.mean(total_loss))
+        self.hidden_state = hidden_state
+
+    def test(self, test_load):
+        print(self.hidden_state[0].size())
+        print(self.hidden_state[1].size())
+        hidden_state = (torch.unsqueeze(self.hidden_state[0][:, 0, :], 1).contiguous(), torch.unsqueeze(self.hidden_state[1][:, 0, :], 1).contiguous())
+        print(hidden_state[0].size())
+        print(hidden_state[1].size())
+        prediction, _ = self.net_lstm(test_load, hidden_state)
+        return prediction
+
 
 
 
